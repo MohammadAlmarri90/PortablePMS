@@ -4,7 +4,7 @@
  *  Created on: May 11, 2022
  *      Author: super
  */
-
+#if (0)
 #include "BQ25895M.h"
 
 void BQ_Write(unsigned char reg, unsigned char data) {
@@ -153,3 +153,4 @@ void BQ_INIT() {
     BQ_Write(0x07, REG07_config);
     BQ_Write(0x08, REG08_config);
 }
+#endif

@@ -7,7 +7,7 @@
  *      Taken from Gunnar's LM49450 implementation on the PIC16f
  *      and ported to the STM32
  */
-
+#if (0)
 #ifndef INC_LM49450_H_
 #define INC_LM49450_H_
 

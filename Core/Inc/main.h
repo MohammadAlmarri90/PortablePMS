@@ -41,7 +41,10 @@ extern "C" {
 
 /* Exported constants --------------------------------------------------------*/
 /* USER CODE BEGIN EC */
-
+enum ErrorCodes {
+	I2CErrorWrite,
+	I2CErrorRead,
+};
 /* USER CODE END EC */
 
 /* Exported macro ------------------------------------------------------------*/
