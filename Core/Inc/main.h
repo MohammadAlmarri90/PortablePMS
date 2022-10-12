@@ -45,6 +45,7 @@ extern "C" {
 enum ErrorCodes {
 	I2CErrorWrite,
 	I2CErrorRead,
+	BQNotPresentOrNotCorrectPart
 };
 /* USER CODE END EC */
 

@@ -91,7 +91,7 @@ void BQ_Write(uint8_t reg, uint8_t data) {
 
 }
 
-unsigned short BQ_Read(uint8_t reg) {
+uint8_t BQ_Read(uint8_t reg) {
     unsigned char data;
 
 	if ( HAL_I2C_Mem_Read( &hi2c1, BQ_ADDR, reg, I2C_MEMADD_SIZE_8BIT, &data, 1, 10 ) != HAL_OK)
@@ -111,32 +111,39 @@ void BQ_Init()
 	BQ.REG00.IINLIM = 0b111;	//3A input
 	BQ.REG00.VINDPM = 0b1011;	//4.76V
 	BQ.REG00.EN_HIZ = 1;
+
 	//REG01
 	BQ.REG01.SYS_MIN = 0b011;	//3.3V minimum voltage cutoff
 	BQ.REG01.CHG_CONFIG = 1;	//enable charge
 	BQ.REG01.OTG_CONFIG = 0;
 	BQ.REG01.I2CWDTIMER = 0;	//disable WD
 	BQ.REG01.RegisterReset = 0;
+
 	//REG02
 	BQ.REG02.FORCE_20PCT = 0;
 	BQ.REG02.BCOLD = 0;
 	BQ.REG02.ICHG = 0b101111;	//Fast Charging current is 3008mAh
+
 	//REG03
 	BQ.REG03.ITERM = 0b0001;	//Termination current is 128mAh
 	BQ.REG03.IPRECHG = 0b0001;	//Precharge current is 128mAh
+
 	//REG04
 	BQ.REG04.VRECHG = 0;
 	BQ.REG04.BATLOWV = 1;		//Battery is precharged until 3.0v then changed to fast charge
 	BQ.REG04.VREG = 0b101100;	//Battery is full at 4.208v
+
 	//REG05
 	BQ.REG05.CHG_TIMER = 0b01;	//If enabled, it will charge for 8 hours
 	BQ.REG05.EN_TIMER = 0;		//disable charging safety timer
 	BQ.REG05.WATCHDOG = 0b00;	//disable watchdog
 	BQ.REG05.EN_TERM = 1;
+
 	//REG06
 	BQ.REG06.TREG = 0b00;		//Thermal reg at 60C degrees
 	BQ.REG06.BHOT = 0b00;
 	BQ.REG06.BOOSTV= 0b1001;	//not needed
+
 	//REG07
 	BQ.REG07.INT_MASK = 0b11;	//Enable pin Inturrupts
 	BQ.REG07.BATFET_Disable = 0;//to Force BATFET off, turn this ON
@@ -152,5 +159,22 @@ void BQ_Init()
 	BQ_Write((uint8_t *)BoostVoltageThermalRegulationControlReg, *(uint8_t *)&BQ.REG06);
 	BQ_Write((uint8_t *)MiscOperationControlReg, *(uint8_t *)&BQ.REG07);
 
+
+}
+
+bool IsBQPresent()
+{
+	if(GLOBAL_errors != 0)
+	{
+		return false;
+	}
+	if(BQ_Read(PartStatusReg) != 0b11000000)
+	{
+		GLOBAL_errors = BQNotPresentOrNotCorrectPart;
+		return false;
+	}else
+	{
+		return true;
+	}
 
 }

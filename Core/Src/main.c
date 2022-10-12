@@ -36,8 +36,9 @@
 
 /*		MAIN CONTROLS		*/
 
-#define ENABLESLEEPMODE true
-#define ENABLEPID	true
+#define ENABLESLEEPMODE 	true
+#define ENABLEPID			true
+#define USINGLM49450		true
 
 /*		PID CONTROLS		*/
 
@@ -67,7 +68,7 @@ I2C_HandleTypeDef hi2c1;
 /* USER CODE BEGIN PV */
 //TODO:
 //IMPLEMENT ERRORS
-uint8_t GLOBAL_errors;	//Error codes in main.h
+uint8_t GLOBAL_errors = 0;	//Error codes in main.h
 
 
 /* USER CODE END PV */
@@ -154,6 +155,12 @@ int main(void)
 #if (ENABLEPID)	//Region ENABLEPID
   InitializePIDController();
 #endif			//End Region ENABLEPID
+
+  if(IsBQPresent() != true)
+  {
+	  //TODO:
+	  //Handle BQ error
+  }
 
   /* USER CODE END 2 */
 

@@ -18,7 +18,7 @@ void BQ_Init();
 void BQ_update();
 
 
-unsigned short BQ_Read(uint8_t reg);
+uint8_t BQ_Read(uint8_t reg);
 void BQ_Write(uint8_t reg, uint8_t data);
-
+bool IsBQPresent();
 #endif /* INC_BQ24295_H_ */
