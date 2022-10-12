@@ -22,6 +22,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "PID.h"
+#include "BQ24295.h"
 #include <stdbool.h>
 /* USER CODE END Includes */
 
