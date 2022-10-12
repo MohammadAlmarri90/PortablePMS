@@ -1,0 +1,16 @@
+../Core/Src/max17048.c:60:6:i2c_master_read_u16	40	static
+../Core/Src/max17048.c:70:6:i2c_master_write_u16	40	static
+../Core/Src/max17048.c:81:20:read_reg	24	static
+../Core/Src/max17048.c:90:20:write_reg	16	static
+../Core/Src/max17048.c:94:20:modify_reg	32	static
+../Core/Src/max17048.c:104:6:max17048_is_present	24	static
+../Core/Src/max17048.c:113:6:max17048_get_vcell	24	static
+../Core/Src/max17048.c:123:6:max17048_get_soc	24	static
+../Core/Src/max17048.c:133:6:max17048_set_bat_low_soc	24	static
+../Core/Src/max17048.c:142:6:max17048_set_undervolted_voltage	24	static
+../Core/Src/max17048.c:148:6:max17048_set_overvolted_voltage	24	static
+../Core/Src/max17048.c:154:6:max17048_set_reset_voltage	24	static
+../Core/Src/max17048.c:160:6:max17048_set_soc_change_alert	24	static
+../Core/Src/max17048.c:166:6:max17048_set_voltage_reset_alert	24	static
+../Core/Src/max17048.c:172:6:max17048_clear_alerts	24	static
+../Core/Src/max17048.c:181:6:max17048_get_alerts	24	static

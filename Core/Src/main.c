@@ -23,7 +23,7 @@
 /* USER CODE BEGIN Includes */
 #include "PID.h"
 #include "BQ24295.h"
-
+#include "max17048.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -130,6 +130,20 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 	}
 }
 
+bool MAX17048_Init()
+{
+	bool ok = true;
+    if (ok) ok = max17048_is_present(&hi2c1);
+    if (ok) ok = max17048_set_undervolted_voltage(&hi2c1, 3000);
+    if (ok) ok = max17048_set_overvolted_voltage(&hi2c1, 4200);
+    if (ok) ok = max17048_set_reset_voltage(&hi2c1, 2500);
+    if (ok) ok = max17048_set_bat_low_soc(&hi2c1, 20);
+    if (ok) ok = max17048_set_voltage_reset_alert(&hi2c1, false);
+    if (ok) ok = max17048_set_soc_change_alert(&hi2c1, false);
+    if (ok) ok = max17048_clear_alerts(&hi2c1);
+
+    return ok;
+}
 
 /* USER CODE END 0 */
 
@@ -163,7 +177,8 @@ int main(void)
   MX_GPIO_Init();
   MX_I2C1_Init();
   /* USER CODE BEGIN 2 */
-
+  MAX17048_Init();
+  BQ_Init();
   /* USER CODE END 2 */
 
   /* Infinite loop */
