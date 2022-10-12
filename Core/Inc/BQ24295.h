@@ -11,8 +11,8 @@
 #include "main.h"
 
 #define BQ_ADDR (0x6B << 1)
-extern I2C_HandleTypeDef hi2c2;
-
+extern I2C_HandleTypeDef hi2c1;
+extern uint8_t GLOBAL_errors;
 
 void BQ_INIT();
 void BQ_update();

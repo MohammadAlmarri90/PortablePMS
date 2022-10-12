@@ -62,13 +62,16 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
+I2C_HandleTypeDef hi2c1;
 
 /* USER CODE BEGIN PV */
-
+uint8_t GLOBAL_errors;	//Error codes in main.h
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
+static void MX_GPIO_Init(void);
+static void MX_I2C1_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -76,13 +79,18 @@ void SystemClock_Config(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
-void InitializePIDController() {
-	/* USER CODE BEGIN 2 */
-	PIDController pid = {   PID_KP, PID_KI, PID_KD, PID_TAU, PID_LIM_MIN,
-							PID_LIM_MAX, PID_LIM_MIN_INT, PID_LIM_MAX_INT,
-							SAMPLE_TIME_S };
-	PIDController_Init(&pid);
-}
+#if (ENABLEPID)	//Region ENABLEPID
+
+	void InitializePIDController() {
+		/* USER CODE BEGIN 2 */
+		PIDController pid = {   PID_KP, PID_KI, PID_KD, PID_TAU, PID_LIM_MIN,
+								PID_LIM_MAX, PID_LIM_MIN_INT, PID_LIM_MAX_INT,
+								SAMPLE_TIME_S };
+		PIDController_Init(&pid);
+	}
+
+#endif			//End Region ENABLEPID
+
 
 #if (ENABLESLEEPMODE)
 	void EnterSleepMode() {
@@ -124,12 +132,13 @@ int main(void)
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
+  MX_GPIO_Init();
+  MX_I2C1_Init();
   /* USER CODE BEGIN 2 */
 
-#if (ENABLEPID)
-	  InitializePIDController();
-#endif
-
+#if (ENABLEPID)	//Region ENABLEPID
+  InitializePIDController();
+#endif			//End Region ENABLEPID
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -137,9 +146,17 @@ int main(void)
   while (1)
   {
 
-	#if (ENABLESLEEPMODE)
-	  EnterSleepMode();
-	#endif
+
+
+
+
+
+	  #if (ENABLESLEEPMODE)
+
+	  	  EnterSleepMode();
+
+	  #endif
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -189,6 +206,67 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+}
+
+/**
+  * @brief I2C1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_I2C1_Init(void)
+{
+
+  /* USER CODE BEGIN I2C1_Init 0 */
+
+  /* USER CODE END I2C1_Init 0 */
+
+  /* USER CODE BEGIN I2C1_Init 1 */
+
+  /* USER CODE END I2C1_Init 1 */
+  hi2c1.Instance = I2C1;
+  hi2c1.Init.Timing = 0x00000004;
+  hi2c1.Init.OwnAddress1 = 0;
+  hi2c1.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
+  hi2c1.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
+  hi2c1.Init.OwnAddress2 = 0;
+  hi2c1.Init.OwnAddress2Masks = I2C_OA2_NOMASK;
+  hi2c1.Init.GeneralCallMode = I2C_GENERALCALL_DISABLE;
+  hi2c1.Init.NoStretchMode = I2C_NOSTRETCH_DISABLE;
+  if (HAL_I2C_Init(&hi2c1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /** Configure Analogue filter
+  */
+  if (HAL_I2CEx_ConfigAnalogFilter(&hi2c1, I2C_ANALOGFILTER_ENABLE) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /** Configure Digital filter
+  */
+  if (HAL_I2CEx_ConfigDigitalFilter(&hi2c1, 0) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN I2C1_Init 2 */
+
+  /* USER CODE END I2C1_Init 2 */
+
+}
+
+/**
+  * @brief GPIO Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_GPIO_Init(void)
+{
+
+  /* GPIO Ports Clock Enable */
+  __HAL_RCC_GPIOA_CLK_ENABLE();
+
 }
 
 /* USER CODE BEGIN 4 */

@@ -4,7 +4,7 @@
  *  Created on: May 11, 2022
  *      Author: super
  */
-
+#if (0)
 #ifndef INC_BQ25895M_H_
 #define INC_BQ25895M_H_
 
@@ -36,3 +36,4 @@ enum {
 };
 
 #endif /* INC_BQ25895M_H_ */
+

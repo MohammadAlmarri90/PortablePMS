@@ -5,7 +5,7 @@
  *      Author: super
  */
 
-
+#if (0)
 #include "LM49450.h"
 
 
@@ -73,3 +73,4 @@ uint8_t LM49450_analog_init()
     return reg0_analog;
 }
 
+#endif
