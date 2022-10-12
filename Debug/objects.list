@@ -1,3 +1,4 @@
+"./Core/Src/BQ24295.o"
 "./Core/Src/BQ25895M.o"
 "./Core/Src/LM49450.o"
 "./Core/Src/PID.o"

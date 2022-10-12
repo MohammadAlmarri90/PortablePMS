@@ -10,14 +10,17 @@
 
 #include "main.h"
 
+/*			DEFINES			*/
 #define BQ_ADDR (0x6B << 1)
+
+/*			EXTERNS			*/
 extern I2C_HandleTypeDef hi2c1;
 extern uint8_t GLOBAL_errors;
 
-void BQ_INIT();
+
+/*			PROTOTYPES		*/
+void BQ_init();
 void BQ_update();
-
-
 unsigned short BQ_Read(unsigned char reg);
 void BQ_Write(unsigned char reg, unsigned char data);
 

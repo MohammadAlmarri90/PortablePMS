@@ -23,7 +23,7 @@
 /* USER CODE BEGIN Includes */
 #include "PID.h"
 #include "BQ24295.h"
-#include <stdbool.h>
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -65,7 +65,11 @@
 I2C_HandleTypeDef hi2c1;
 
 /* USER CODE BEGIN PV */
+//TODO:
+//IMPLEMENT ERRORS
 uint8_t GLOBAL_errors;	//Error codes in main.h
+
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
