@@ -125,7 +125,7 @@ void BQ_Init()
 	BQ.REG02.ICHG = 0b101111;	//Fast Charging current is 3008mAh
 
 	//REG03
-	BQ.REG03.ITERM = 0b0001;	//Termination current is 128mAh
+	BQ.REG03.ITERM = 0b0011;	//Termination current is 384mAh
 	BQ.REG03.IPRECHG = 0b0001;	//Precharge current is 128mAh
 
 	//REG04
@@ -162,19 +162,34 @@ void BQ_Init()
 
 }
 
-bool IsBQPresent()
+bool BQ_IsPresent()
 {
 	if(GLOBAL_errors != 0)
 	{
 		return false;
 	}
-	if(BQ_Read(PartStatusReg) != 0b11000000)
+
+	uint8_t reg = BQ_Read(PartStatusReg);
+
+	reg = (reg >>5);
+
+	if(BQ_Read(PartStatusReg) == 0b110)
+	{
+		return true;
+	}else
 	{
 		GLOBAL_errors = BQNotPresentOrNotCorrectPart;
 		return false;
-	}else
-	{
-		return true;
 	}
-
 }
+
+
+uint8_t BQ_IsCharging()
+{
+	uint8_t SystemStatus 	= BQ_Read(SystemStatusReg);
+	uint8_t chargeStatus 	= (SystemStatus >> 4) & 0b11;
+	return chargeStatus;
+}
+
+
+

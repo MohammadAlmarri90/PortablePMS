@@ -71,6 +71,9 @@ I2C_HandleTypeDef hi2c1;
 uint8_t GLOBAL_errors = 0;	//Error codes in main.h
 
 
+/*		FLAGS		*/
+bool BQ_FLAG = false;
+uint8_t ChargeStatus;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -87,7 +90,6 @@ static void MX_I2C1_Init(void);
 #if (ENABLEPID)	//Region ENABLEPID
 
 	void InitializePIDController() {
-		/* USER CODE BEGIN 2 */
 		PIDController pid = {
 				PID_KP,
 				PID_KI,
@@ -107,7 +109,7 @@ static void MX_I2C1_Init(void);
 
 
 #if (ENABLESLEEPMODE)
-	void EnterSleepMode() {
+	void EnterSleepModeWakeOnInturrupt() {
 		HAL_SuspendTick();
 		HAL_PWR_EnterSLEEPMode(PWR_MAINREGULATOR_ON, PWR_SLEEPENTRY_WFI);
 	}
@@ -115,6 +117,18 @@ static void MX_I2C1_Init(void);
 		HAL_ResumeTick();
 	}
 #endif
+
+
+
+/*		INURRUPT CODE		*/
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+{
+	if(GPIO_Pin == BQ_INT_Pin) // BQ INT pin wake up
+	{
+		WakeUpFromSleepMode();
+		BQ_FLAG = true;
+	}
+}
 
 
 /* USER CODE END 0 */
@@ -150,31 +164,30 @@ int main(void)
   MX_I2C1_Init();
   /* USER CODE BEGIN 2 */
 
-  BQ_Init();
-
-#if (ENABLEPID)	//Region ENABLEPID
-  InitializePIDController();
-#endif			//End Region ENABLEPID
-
-  if(IsBQPresent() != true)
-  {
-	  //TODO:
-	  //Handle BQ error
-  }
-
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-
-
-	  #if (ENABLESLEEPMODE)
-
-	  	  EnterSleepMode();
-	  #endif
-
+	  if(BQ_FLAG)
+	  {
+		  BQ_FLAG = false;
+		  ChargeStatus = BQ_IsCharging();
+		  switch(ChargeStatus)
+		  {
+		  case 0:
+			  //Not Charging
+			  break;
+		  case 1:
+		  case 2:
+			  //Charging
+			  break;
+		  case 3:
+			  //Charging done
+			  break;
+		  }
+	  }
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -281,9 +294,20 @@ static void MX_I2C1_Init(void)
   */
 static void MX_GPIO_Init(void)
 {
+  GPIO_InitTypeDef GPIO_InitStruct = {0};
 
   /* GPIO Ports Clock Enable */
   __HAL_RCC_GPIOA_CLK_ENABLE();
+
+  /*Configure GPIO pin : BQ_INT_Pin */
+  GPIO_InitStruct.Pin = BQ_INT_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(BQ_INT_GPIO_Port, &GPIO_InitStruct);
+
+  /* EXTI interrupt init*/
+  HAL_NVIC_SetPriority(EXTI9_5_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
 
 }
 

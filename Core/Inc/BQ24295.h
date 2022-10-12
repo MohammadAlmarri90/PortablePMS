@@ -15,10 +15,9 @@ extern I2C_HandleTypeDef hi2c1;
 extern uint8_t GLOBAL_errors;
 
 void BQ_Init();
-void BQ_update();
-
 
 uint8_t BQ_Read(uint8_t reg);
 void BQ_Write(uint8_t reg, uint8_t data);
-bool IsBQPresent();
+bool BQ_IsPresent();
+uint8_t BQ_IsCharging();
 #endif /* INC_BQ24295_H_ */
