@@ -1,3 +1,3 @@
-../Core/Src/BQ24295.c:41:6:BQ_Write	32	static
-../Core/Src/BQ24295.c:50:16:BQ_Read	40	static
-../Core/Src/BQ24295.c:62:6:BQ_INIT	16	static
+../Core/Src/BQ24295.c:85:6:BQ_Write	32	static
+../Core/Src/BQ24295.c:94:16:BQ_Read	40	static
+../Core/Src/BQ24295.c:106:6:BQ_Init	16	static

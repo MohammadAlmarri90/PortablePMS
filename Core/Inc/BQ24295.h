@@ -10,18 +10,15 @@
 
 #include "main.h"
 
-/*			DEFINES			*/
 #define BQ_ADDR (0x6B << 1)
-
-/*			EXTERNS			*/
 extern I2C_HandleTypeDef hi2c1;
 extern uint8_t GLOBAL_errors;
 
-
-/*			PROTOTYPES		*/
-void BQ_init();
+void BQ_Init();
 void BQ_update();
-unsigned short BQ_Read(unsigned char reg);
-void BQ_Write(unsigned char reg, unsigned char data);
+
+
+unsigned short BQ_Read(uint8_t reg);
+void BQ_Write(uint8_t reg, uint8_t data);
 
 #endif /* INC_BQ24295_H_ */

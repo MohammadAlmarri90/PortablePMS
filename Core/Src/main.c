@@ -87,9 +87,18 @@ static void MX_I2C1_Init(void);
 
 	void InitializePIDController() {
 		/* USER CODE BEGIN 2 */
-		PIDController pid = {   PID_KP, PID_KI, PID_KD, PID_TAU, PID_LIM_MIN,
-								PID_LIM_MAX, PID_LIM_MIN_INT, PID_LIM_MAX_INT,
-								SAMPLE_TIME_S };
+		PIDController pid = {
+				PID_KP,
+				PID_KI,
+				PID_KD,
+				PID_TAU,
+				PID_LIM_MIN,
+				PID_LIM_MAX,
+				PID_LIM_MIN_INT,
+				PID_LIM_MAX_INT,
+				SAMPLE_TIME_S
+		};
+
 		PIDController_Init(&pid);
 	}
 
@@ -140,9 +149,12 @@ int main(void)
   MX_I2C1_Init();
   /* USER CODE BEGIN 2 */
 
+  BQ_Init();
+
 #if (ENABLEPID)	//Region ENABLEPID
   InitializePIDController();
 #endif			//End Region ENABLEPID
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -151,14 +163,9 @@ int main(void)
   {
 
 
-
-
-
-
 	  #if (ENABLESLEEPMODE)
 
 	  	  EnterSleepMode();
-
 	  #endif
 
     /* USER CODE END WHILE */
