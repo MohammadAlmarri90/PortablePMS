@@ -54,6 +54,8 @@ enum ErrorCodes {
 
 /* USER CODE END EM */
 
+void HAL_TIM_MspPostInit(TIM_HandleTypeDef *htim);
+
 /* Exported functions prototypes ---------------------------------------------*/
 void Error_Handler(void);
 
@@ -62,6 +64,15 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
+#define RGB_R_Pin GPIO_PIN_0
+#define RGB_R_GPIO_Port GPIOA
+#define RGB_G_Pin GPIO_PIN_1
+#define RGB_G_GPIO_Port GPIOA
+#define RGB_B_Pin GPIO_PIN_2
+#define RGB_B_GPIO_Port GPIOA
+#define MAX_ALRT_Pin GPIO_PIN_9
+#define MAX_ALRT_GPIO_Port GPIOC
+#define MAX_ALRT_EXTI_IRQn EXTI9_5_IRQn
 #define BQ_INT_Pin GPIO_PIN_8
 #define BQ_INT_GPIO_Port GPIOA
 #define BQ_INT_EXTI_IRQn EXTI9_5_IRQn
