@@ -216,14 +216,14 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 	}
 	if(HAL_GPIO_ReadPin(Power_Button_GPIO_Port, Power_Button_Pin) == GPIO_PIN_RESET && !IsPressPeriodStart){
 
-		___HAL_TIM_SET_AUTORELOAD(&htim15, BUTTON_SHORTPRESS_PERIOD);
+		__HAL_TIM_SET_AUTORELOAD(&htim15, BUTTON_SHORTPRESS_PERIOD);
 		HAL_TIM_Base_Start_IT(&htim15);
 		IsPressPeriodStart = true;
 		PowerButtonShortPress = false;
 	}
 	else if(HAL_GPIO_ReadPin(Power_Button_GPIO_Port, Power_Button_Pin) == GPIO_PIN_RESET && !PowerButtonShortPress){
 		HAL_TIM_Base_Stop_IT(&htim15);
-		___HAL_TIM_SET_AUTORELOAD(&htim15, BUTTON_LONGPRESS_PERIOD);
+		__HAL_TIM_SET_AUTORELOAD(&htim15, BUTTON_LONGPRESS_PERIOD);
 		HAL_TIM_Base_Start_IT(&htim15);
 		PowerButtonShortPress = true;
 		PowerButtonLongPress = false;
@@ -232,11 +232,14 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 		HAL_TIM_Base_Stop_IT(&htim15);
 		PowerButtonLongPress = true;
 		PowerButtonUnintentionalPress = false;
-		___HAL_TIM_SET_AUTORELOAD(&htim15, BUTTON_UNINTENTIONAL_PERIOD);
+		__HAL_TIM_SET_AUTORELOAD(&htim15, BUTTON_UNINTENTIONAL_PERIOD);
 		HAL_TIM_Base_Start_IT(&htim15);
-	}else if(HAL_GPIO_ReadPin(Power_Button_GPIO_Port, Power_Button_Pin) == GPIO_PIN_RESET && !PowerButtonUnintentionalPress)
+	}
+	else if(HAL_GPIO_ReadPin(Power_Button_GPIO_Port, Power_Button_Pin) == GPIO_PIN_RESET && !PowerButtonUnintentionalPress)
 	{
-		//Clear all flags for next press
+		//unintentional button press so clear everything for next press
+		HAL_TIM_Base_Stop_IT(&htim15);
+		__HAL_TIM_SET_AUTORELOAD(&htim15, BUTTON_DEBOUNCE_MS);	//Reset power button debounce period
 		PowerButtonDebounced = true;
 		IsPressPeriodStart = false;
 		PowerButtonShortPress = false;
@@ -245,6 +248,9 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 
 	if(HAL_GPIO_ReadPin(Power_Button_GPIO_Port, Power_Button_Pin) == GPIO_PIN_SET && IsPressPeriodStart)
 	{
+		//Cancelled press so clear everything for next press
+		HAL_TIM_Base_Stop_IT(&htim15);
+		__HAL_TIM_SET_AUTORELOAD(&htim15, BUTTON_DEBOUNCE_MS);	//Reset power button debounce period
 		PowerButtonDebounced = true;
 		IsPressPeriodStart = false;
 		PowerButtonShortPress = false;
