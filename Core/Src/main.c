@@ -36,10 +36,16 @@
 
 /*		MAIN CONTROLS		*/
 
-#define ENABLESLEEPMODE 	true
-#define ENABLEPID			true
-#define USINGLM49450		true
-#define USINGMAX17048		true
+#define ENABLESLEEPMODE 			true
+#define ENABLEPID					true
+#define USINGLM49450				true
+#define USINGMAX17048				true
+
+/*debouncing Controls*/
+#define BUTTON_DEBOUNCE_MS			100
+#define BUTTON_SHORTPRESS_PERIOD	500
+#define BUTTON_LONGPRESS_PERIOD		1000 //(total is (debounce + shortpress + longpress) periods
+#define BUTTON_UNINTENTIONAL_PERIOD	4000 //pressed on random object
 
 /*		PID CONTROLS		*/
 
@@ -75,6 +81,7 @@
 I2C_HandleTypeDef hi2c1;
 
 TIM_HandleTypeDef htim2;
+TIM_HandleTypeDef htim15;
 
 /* USER CODE BEGIN PV */
 //TODO:
@@ -84,6 +91,13 @@ uint8_t GLOBAL_errors = 0;	//Error codes in main.h
 
 /*		FLAGS		*/
 bool BQ_FLAG = false;
+bool MAX_FLAG = false;
+bool PowerButtonDebounced = true;
+bool IsPressPeriodStart = false;
+bool PowerButtonShortPress = false;
+bool PowerButtonLongPress = false;
+bool PowerButtonUnintentionalPress = false;
+bool SystemPowerState = false;
 uint8_t ChargeStatus;
 /* USER CODE END PV */
 
@@ -92,6 +106,7 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_I2C1_Init(void);
 static void MX_TIM2_Init(void);
+static void MX_TIM15_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -140,7 +155,108 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 		WakeUpFromSleepMode();
 		BQ_FLAG = true;
 	}
+	if(GPIO_Pin == MAX_ALRT_Pin)
+	{
+		WakeUpFromSleepMode();
+		MAX_FLAG = true;
+
+	}
+	if(GPIO_Pin == Power_Button_Pin)
+	{
+		if(HAL_GPIO_ReadPin(Power_Button_GPIO_Port, Power_Button_Pin) == GPIO_PIN_RESET
+				&& PowerButtonDebounced && !IsPressPeriodStart)
+		{
+			HAL_TIM_Base_Start_IT(&htim15);	//Start Debounce
+			PowerButtonDebounced = false;
+		}
+		if(HAL_GPIO_ReadPin(Power_Button_GPIO_Port, Power_Button_Pin) == GPIO_PIN_SET &&
+				PowerButtonDebounced && IsPressPeriodStart && PowerButtonShortPress &&
+				PowerButtonLongPress && !SystemPowerState)
+		{
+			//All conditions met turn ON system and clear for next button
+			HAL_TIM_Base_Stop_IT(&htim15);
+			__HAL_TIM_SET_AUTORELOAD(&htim15, BUTTON_DEBOUNCE_MS);	//Reset power button debounce period
+			SystemPowerState = true;
+			PowerButtonDebounced = true;
+			IsPressPeriodStart = false;
+			PowerButtonShortPress = false;
+			PowerButtonLongPress = false;
+		}
+		if(HAL_GPIO_ReadPin(Power_Button_GPIO_Port, Power_Button_Pin) == GPIO_PIN_SET &&
+				PowerButtonDebounced && IsPressPeriodStart && PowerButtonShortPress &&
+				PowerButtonLongPress && SystemPowerState)
+		{
+			//All conditions met turn OFF system and clear for next button
+			HAL_TIM_Base_Stop_IT(&htim15);
+			__HAL_TIM_SET_AUTORELOAD(&htim15, BUTTON_DEBOUNCE_MS);	//Reset power button debounce period
+			SystemPowerState = false;
+			PowerButtonDebounced = true;
+			IsPressPeriodStart = false;
+			PowerButtonShortPress = false;
+			PowerButtonLongPress = false;
+		}
+
+
+	}
+
 }
+
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{
+  /* Prevent unused argument(s) compilation warning */
+  UNUSED(htim);
+
+  /* NOTE : This function should not be modified, when the callback is needed,
+            the HAL_TIM_PeriodElapsedCallback could be implemented in the user file
+   */
+	if(HAL_GPIO_ReadPin(Power_Button_GPIO_Port, Power_Button_Pin) == GPIO_PIN_RESET && !PowerButtonDebounced){
+		HAL_TIM_Base_Stop_IT(&htim15);
+		PowerButtonDebounced = true;
+
+	}
+	if(HAL_GPIO_ReadPin(Power_Button_GPIO_Port, Power_Button_Pin) == GPIO_PIN_RESET && !IsPressPeriodStart){
+
+		___HAL_TIM_SET_AUTORELOAD(&htim15, BUTTON_SHORTPRESS_PERIOD);
+		HAL_TIM_Base_Start_IT(&htim15);
+		IsPressPeriodStart = true;
+		PowerButtonShortPress = false;
+	}
+	else if(HAL_GPIO_ReadPin(Power_Button_GPIO_Port, Power_Button_Pin) == GPIO_PIN_RESET && !PowerButtonShortPress){
+		HAL_TIM_Base_Stop_IT(&htim15);
+		___HAL_TIM_SET_AUTORELOAD(&htim15, BUTTON_LONGPRESS_PERIOD);
+		HAL_TIM_Base_Start_IT(&htim15);
+		PowerButtonShortPress = true;
+		PowerButtonLongPress = false;
+	}
+	else if(HAL_GPIO_ReadPin(Power_Button_GPIO_Port, Power_Button_Pin) == GPIO_PIN_RESET && !PowerButtonLongPress){
+		HAL_TIM_Base_Stop_IT(&htim15);
+		PowerButtonLongPress = true;
+		PowerButtonUnintentionalPress = false;
+		___HAL_TIM_SET_AUTORELOAD(&htim15, BUTTON_UNINTENTIONAL_PERIOD);
+		HAL_TIM_Base_Start_IT(&htim15);
+	}else if(HAL_GPIO_ReadPin(Power_Button_GPIO_Port, Power_Button_Pin) == GPIO_PIN_RESET && !PowerButtonUnintentionalPress)
+	{
+		//Clear all flags for next press
+		PowerButtonDebounced = true;
+		IsPressPeriodStart = false;
+		PowerButtonShortPress = false;
+		PowerButtonLongPress = false;
+	}
+
+	if(HAL_GPIO_ReadPin(Power_Button_GPIO_Port, Power_Button_Pin) == GPIO_PIN_SET && IsPressPeriodStart)
+	{
+		PowerButtonDebounced = true;
+		IsPressPeriodStart = false;
+		PowerButtonShortPress = false;
+		PowerButtonLongPress = false;
+		PowerButtonUnintentionalPress = false;
+	}
+
+
+
+
+}
+
 #if (USINGMAX17048)
 
 uint8_t currentBatteryPercentage;
@@ -206,7 +322,10 @@ int main(void)
   MX_GPIO_Init();
   MX_I2C1_Init();
   MX_TIM2_Init();
+  MX_TIM15_Init();
   /* USER CODE BEGIN 2 */
+
+  __HAL_TIM_SET_AUTORELOAD(&htim15, BUTTON_DEBOUNCE_MS);	//Set power button debounce period
   HAL_Delay(100);	// For stability
 #if (USINGMAX17048)
   MAX17048_Init();
@@ -234,11 +353,20 @@ int main(void)
   {
 	  if(BQ_FLAG)
 	  {
+		  BQ_FLAG = false;	//clear flag
 		  /*
 		   * TODO:
 		   * something with the BQ INT
 		   */
 	  }
+
+#if (USINGMAX17048)
+	  if(MAX_FLAG)
+	  {
+		  MAX_FLAG = false;	//clear flag
+	  }
+
+#endif
 
     /* USER CODE END WHILE */
 
@@ -407,6 +535,52 @@ static void MX_TIM2_Init(void)
 }
 
 /**
+  * @brief TIM15 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM15_Init(void)
+{
+
+  /* USER CODE BEGIN TIM15_Init 0 */
+
+  /* USER CODE END TIM15_Init 0 */
+
+  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+
+  /* USER CODE BEGIN TIM15_Init 1 */
+
+  /* USER CODE END TIM15_Init 1 */
+  htim15.Instance = TIM15;
+  htim15.Init.Prescaler = 4000;
+  htim15.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim15.Init.Period = 50;
+  htim15.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim15.Init.RepetitionCounter = 0;
+  htim15.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim15) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+  if (HAL_TIM_ConfigClockSource(&htim15, &sClockSourceConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim15, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM15_Init 2 */
+
+  /* USER CODE END TIM15_Init 2 */
+
+}
+
+/**
   * @brief GPIO Initialization Function
   * @param None
   * @retval None
@@ -419,6 +593,12 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOA_CLK_ENABLE();
   __HAL_RCC_GPIOC_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
+
+  /*Configure GPIO pin : Power_Button_Pin */
+  GPIO_InitStruct.Pin = Power_Button_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING_FALLING;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  HAL_GPIO_Init(Power_Button_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : MAX_ALRT_Pin */
   GPIO_InitStruct.Pin = MAX_ALRT_Pin;
