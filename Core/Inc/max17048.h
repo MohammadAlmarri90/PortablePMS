@@ -1,8 +1,13 @@
-#pragma once
+/*
+ * Author: Jefflongo
+ * Integrated to STM32: Mohammad Almarri
+ */
 
 #include <stdbool.h>
 #include <stdint.h>
 #include "main.h"
+
+
 
 #define BAT_LOW_PERCENT 15 // 1 to 32
 

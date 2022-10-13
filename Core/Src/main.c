@@ -39,6 +39,7 @@
 #define ENABLESLEEPMODE 	true
 #define ENABLEPID			true
 #define USINGLM49450		true
+#define USINGMAX17048		true
 
 /*		PID CONTROLS		*/
 
@@ -53,6 +54,14 @@
 	#define PID_LIM_MAX_INT  5.0f
 	#define SAMPLE_TIME_S 0.01f
 	PIDController pid;
+#endif
+
+/*		MAX17048 CONTROLS	*/
+#if (USINGMAX17048)
+	#define Battery_UnderVoltage	3200
+	#define Battery_OverVoltage		4200
+	#define Battery_ResetVoltage	2500	//Set to 2.5V as advised in datasheet (P.13)
+	#define Battery_LowSOCAlert		30		//will send an alert when SOC(1-32%) decreases to assigned number
 #endif
 
 /* USER CODE END PD */
@@ -129,21 +138,25 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 		BQ_FLAG = true;
 	}
 }
+#if (USINGMAX17048)
 
-bool MAX17048_Init()
-{
-	bool ok = true;
-    if (ok) ok = max17048_is_present(&hi2c1);
-    if (ok) ok = max17048_set_undervolted_voltage(&hi2c1, 3000);
-    if (ok) ok = max17048_set_overvolted_voltage(&hi2c1, 4200);
-    if (ok) ok = max17048_set_reset_voltage(&hi2c1, 2500);
-    if (ok) ok = max17048_set_bat_low_soc(&hi2c1, 20);
-    if (ok) ok = max17048_set_voltage_reset_alert(&hi2c1, false);
-    if (ok) ok = max17048_set_soc_change_alert(&hi2c1, false);
-    if (ok) ok = max17048_clear_alerts(&hi2c1);
+uint8_t currentBatteryPercentage;
 
-    return ok;
-}
+	bool MAX17048_Init()
+	{
+		bool ok = true;
+		if (ok) ok = max17048_is_present(&hi2c1);
+		if (ok) ok = max17048_set_undervolted_voltage(&hi2c1, Battery_UnderVoltage);
+		if (ok) ok = max17048_set_overvolted_voltage(&hi2c1, Battery_OverVoltage);
+		if (ok) ok = max17048_set_reset_voltage(&hi2c1, Battery_ResetVoltage);
+		if (ok) ok = max17048_set_bat_low_soc(&hi2c1, Battery_LowSOCAlert);
+		if (ok) ok = max17048_set_voltage_reset_alert(&hi2c1, false);
+		if (ok) ok = max17048_set_soc_change_alert(&hi2c1, false);
+		if (ok) ok = max17048_clear_alerts(&hi2c1);
+		return ok;
+	}
+#endif
+
 
 /* USER CODE END 0 */
 
@@ -177,8 +190,15 @@ int main(void)
   MX_GPIO_Init();
   MX_I2C1_Init();
   /* USER CODE BEGIN 2 */
+  HAL_Delay(100);	// For stability
+#if (USINGMAX17048)
   MAX17048_Init();
+#endif
   BQ_Init();
+  HAL_Delay(200);	// For stability
+
+  max17048_get_soc(&hi2c1, &currentBatteryPercentage);	//Get current Battery Percentage
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -187,22 +207,12 @@ int main(void)
   {
 	  if(BQ_FLAG)
 	  {
-		  BQ_FLAG = false;
-		  ChargeStatus = BQ_IsCharging();
-		  switch(ChargeStatus)
-		  {
-		  case 0:
-			  //Not Charging
-			  break;
-		  case 1:
-		  case 2:
-			  //Charging
-			  break;
-		  case 3:
-			  //Charging done
-			  break;
-		  }
+		  /*
+		   * TODO:
+		   * something with the BQ INT
+		   */
 	  }
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
