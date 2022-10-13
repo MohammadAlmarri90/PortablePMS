@@ -160,7 +160,15 @@ uint8_t currentBatteryPercentage;
 	}
 #endif
 
+static int Remap (float value, float from1, float to1, float from2, float to2) {
+	return ((value - from1) / (to1 - from1) * (to2 - from2)) + from2;
+}
+
 void Set_RGB(uint8_t Red,uint8_t Green,uint8_t Blue) {
+	//invert 0-100 -> 100-0 in case LED is common Anode and grounded to STM's GPIO's
+	Red = Remap(Red, 0, 100, 100, 0);
+	Green = Remap(Green, 0, 100, 100, 0);
+	Blue = Remap(Blue, 0, 100, 100, 0);
 	TIM2->CCR1 = Red;
 	TIM2->CCR2 = Green;
 	TIM2->CCR3 = Blue;
@@ -211,6 +219,13 @@ int main(void)
   HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);
   HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_2);
   HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_3);
+  Set_RGB( 100, 0, 0 );
+  HAL_Delay(200);
+  Set_RGB(0, 100, 0);
+  HAL_Delay(200);
+  Set_RGB(0, 0, 100);
+  HAL_Delay(500);
+  Set_RGB(0, 0, 0);
   /* USER CODE END 2 */
 
   /* Infinite loop */
