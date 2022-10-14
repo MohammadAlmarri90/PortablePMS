@@ -101,6 +101,9 @@ bool PowerButtonUnintentionalPress = false;
 
 bool SystemPowerState = false;
 bool InitialSystemBoot = false;
+
+bool IsSystemCharging = false;
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -267,7 +270,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 
 #if (USINGMAX17048)
 
-uint8_t currentBatteryPercentage;
+uint8_t CurrentBatteryPercentage;
 
 	bool MAX17048_Init()
 	{
@@ -343,7 +346,7 @@ int main(void)
   BQ_Init();
   HAL_Delay(200);	// For stability
 
-  max17048_get_soc(&hi2c1, &currentBatteryPercentage);	//Get current Battery Percentage
+  max17048_get_soc(&hi2c1, &CurrentBatteryPercentage);	//Get current Battery Percentage
   Set_RGB( 100, 100, 100 );
 
   /* USER CODE END 2 */
@@ -378,12 +381,34 @@ int main(void)
 			  HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_2);
 			  HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_3);
 			  Set_RGB( 100, 0, 0 );
-			  HAL_Delay(200);
+			  HAL_Delay(100);
 			  Set_RGB(0, 100, 0);
-			  HAL_Delay(200);
+			  HAL_Delay(100);
 			  Set_RGB(0, 0, 100);
-			  HAL_Delay(500);
+			  HAL_Delay(200);
 		  }
+		  /*
+		   * While system is running,the code below will always run
+		   */
+
+		  if(IsSystemCharging)
+		  {
+			  if(CurrentBatteryPercentage < 70)
+			  {
+				  Set_RGB(100, 64, 0);
+			  }else if(CurrentBatteryPercentage >= 70 && CurrentBatteryPercentage < 90)
+			  {
+				  Set_RGB(0, 100, 0);
+			  }else
+			  {
+				  Set_RGB(0, 0, 100);
+			  }
+		  }
+		  else
+		  {
+			  Set_RGB(Remap(CurrentBatteryPercentage, 0, 100, 100, 0), 0, Remap(CurrentBatteryPercentage, 0, 100, 40, 100));
+		  }
+
 	  }else if(!SystemPowerState)
 	  {
 		 if(InitialSystemBoot)	//Start shutdown sequence
@@ -399,6 +424,7 @@ int main(void)
 			  HAL_Delay(500);
 			  Set_RGB(0, 0, 0);
 		 }
+
 	  }
 
     /* USER CODE END WHILE */
