@@ -92,13 +92,15 @@ uint8_t GLOBAL_errors = 0;	//Error codes in main.h
 /*		FLAGS		*/
 bool BQ_FLAG = false;
 bool MAX_FLAG = false;
+
 bool PowerButtonDebounced = true;
 bool IsPressPeriodStart = false;
 bool PowerButtonShortPress = false;
 bool PowerButtonLongPress = false;
 bool PowerButtonUnintentionalPress = false;
+
 bool SystemPowerState = false;
-uint8_t ChargeStatus;
+bool InitialSystemBoot = false;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -182,7 +184,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 			PowerButtonShortPress = false;
 			PowerButtonLongPress = false;
 		}
-		if(HAL_GPIO_ReadPin(Power_Button_GPIO_Port, Power_Button_Pin) == GPIO_PIN_SET &&
+		else if(HAL_GPIO_ReadPin(Power_Button_GPIO_Port, Power_Button_Pin) == GPIO_PIN_SET &&
 				PowerButtonDebounced && IsPressPeriodStart && PowerButtonShortPress &&
 				PowerButtonLongPress && SystemPowerState)
 		{
@@ -333,24 +335,17 @@ int main(void)
 
   __HAL_TIM_SET_AUTORELOAD(&htim15, BUTTON_DEBOUNCE_MS);	//Set power button debounce period
   HAL_Delay(100);	// For stability
+
 #if (USINGMAX17048)
   MAX17048_Init();
 #endif
+
   BQ_Init();
   HAL_Delay(200);	// For stability
 
   max17048_get_soc(&hi2c1, &currentBatteryPercentage);	//Get current Battery Percentage
   Set_RGB( 100, 100, 100 );
-  HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);
-  HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_2);
-  HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_3);
-  Set_RGB( 100, 0, 0 );
-  HAL_Delay(200);
-  Set_RGB(0, 100, 0);
-  HAL_Delay(200);
-  Set_RGB(0, 0, 100);
-  HAL_Delay(500);
-  Set_RGB(0, 0, 0);
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -373,6 +368,38 @@ int main(void)
 	  }
 
 #endif
+
+	  if(SystemPowerState)
+	  {
+		  if(!InitialSystemBoot)	//Start a boot sequence once
+		  {
+			  InitialSystemBoot = true;	//Do it once
+			  HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);
+			  HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_2);
+			  HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_3);
+			  Set_RGB( 100, 0, 0 );
+			  HAL_Delay(200);
+			  Set_RGB(0, 100, 0);
+			  HAL_Delay(200);
+			  Set_RGB(0, 0, 100);
+			  HAL_Delay(500);
+		  }
+	  }else if(!SystemPowerState)
+	  {
+		 if(InitialSystemBoot)	//Start shutdown sequence
+		 {
+			 InitialSystemBoot = false;
+			  Set_RGB( 0, 100, 0 );
+			  HAL_Delay(200);
+			  Set_RGB(0, 0, 100);
+			  HAL_Delay(200);
+			  Set_RGB( 0, 100, 0 );
+			  HAL_Delay(200);
+			  Set_RGB(0, 0, 100);
+			  HAL_Delay(500);
+			  Set_RGB(0, 0, 0);
+		 }
+	  }
 
     /* USER CODE END WHILE */
 
