@@ -1,5 +1,5 @@
 ../Core/Src/BQ24295.c:85:6:BQ_Write	32	static
 ../Core/Src/BQ24295.c:94:9:BQ_Read	40	static
 ../Core/Src/BQ24295.c:106:6:BQ_Init	16	static
-../Core/Src/BQ24295.c:165:6:BQ_IsPresent	16	static
-../Core/Src/BQ24295.c:187:9:BQ_IsCharging	16	static
+../Core/Src/BQ24295.c:169:6:BQ_IsPresent	16	static
+../Core/Src/BQ24295.c:191:9:BQ_IsCharging	16	static

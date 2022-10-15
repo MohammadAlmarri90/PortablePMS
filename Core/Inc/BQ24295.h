@@ -14,7 +14,7 @@
 extern I2C_HandleTypeDef hi2c1;
 extern uint8_t GLOBAL_errors;
 
-void BQ_Init();
+bool BQ_Init();
 
 uint8_t BQ_Read(uint8_t reg);
 void BQ_Write(uint8_t reg, uint8_t data);

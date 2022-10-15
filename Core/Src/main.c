@@ -337,14 +337,28 @@ int main(void)
   /* USER CODE BEGIN 2 */
 
   __HAL_TIM_SET_AUTORELOAD(&htim15, BUTTON_DEBOUNCE_MS);	//Set power button debounce period
-  HAL_Delay(100);	// For stability
+  HAL_Delay(70);	// For stability
 
 #if (USINGMAX17048)
   MAX17048_Init();
 #endif
 
-  BQ_Init();
-  HAL_Delay(200);	// For stability
+  if(!BQ_Init())
+  {
+	  HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);
+	  HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_2);
+	  HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_3);
+
+	  while(1)		//if BQ not present, then warn using that it's not finding it by flashing red
+	  {
+		  Set_RGB(100, 0, 0);
+		  HAL_Delay(250);
+		  Set_RGB(0, 0, 0);
+		  HAL_Delay(250);
+	  }
+
+  }
+  HAL_Delay(70);	// For stability
 
   max17048_get_soc(&hi2c1, &CurrentBatteryPercentage);	//Get current Battery Percentage
   Set_RGB( 100, 100, 100 );

@@ -103,7 +103,7 @@ uint8_t BQ_Read(uint8_t reg) {
 
 }
 
-void BQ_Init()
+bool BQ_Init()
 {
 	struct BQ_Register_fields BQ;
 
@@ -150,6 +150,10 @@ void BQ_Init()
 	BQ.REG07.TMR2X_EN = 1;
 	BQ.REG07.DPDM_EN = 0;
 
+	if(!BQ_IsPresent())
+	{
+		return false;
+	}
 	BQ_Write((uint8_t *)InputSourceControlReg, *(uint8_t *)&BQ.REG00);
 	BQ_Write((uint8_t *)PowerOnConfigReg, *(uint8_t *)&BQ.REG01);
 	BQ_Write((uint8_t *)ChargeCurrentControlReg, *(uint8_t *)&BQ.REG02);
@@ -159,7 +163,7 @@ void BQ_Init()
 	BQ_Write((uint8_t *)BoostVoltageThermalRegulationControlReg, *(uint8_t *)&BQ.REG06);
 	BQ_Write((uint8_t *)MiscOperationControlReg, *(uint8_t *)&BQ.REG07);
 
-
+	return true;
 }
 
 bool BQ_IsPresent()
