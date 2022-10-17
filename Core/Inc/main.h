@@ -83,6 +83,8 @@ void Error_Handler(void);
 #define BQ_INT_Pin GPIO_PIN_8
 #define BQ_INT_GPIO_Port GPIOA
 #define BQ_INT_EXTI_IRQn EXTI9_5_IRQn
+#define FAN_PWM_Pin GPIO_PIN_11
+#define FAN_PWM_GPIO_Port GPIOA
 /* USER CODE BEGIN Private defines */
 
 /* USER CODE END Private defines */
