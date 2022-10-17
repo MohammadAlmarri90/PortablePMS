@@ -24,6 +24,7 @@
 #include "PID.h"
 #include "BQ24295.h"
 #include "max17048.h"
+#include "math.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -60,6 +61,11 @@
 	#define PID_LIM_MAX_INT  5.0f
 	#define SAMPLE_TIME_S 0.01f
 	PIDController pid;
+	float NTC_RawValue;
+	/* constants of Steinhart-Hart equation */
+	#define A 0.0008736528f
+	#define B 0.000253893f
+	#define C 0.0000001816f
 #endif
 
 /*		MAX17048 CONTROLS	*/
@@ -78,6 +84,8 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
+ADC_HandleTypeDef hadc1;
+
 I2C_HandleTypeDef hi2c1;
 
 TIM_HandleTypeDef htim2;
@@ -112,6 +120,7 @@ static void MX_GPIO_Init(void);
 static void MX_I2C1_Init(void);
 static void MX_TIM2_Init(void);
 static void MX_TIM15_Init(void);
+static void MX_ADC1_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -334,10 +343,14 @@ int main(void)
   MX_I2C1_Init();
   MX_TIM2_Init();
   MX_TIM15_Init();
+  MX_ADC1_Init();
   /* USER CODE BEGIN 2 */
 
   __HAL_TIM_SET_AUTORELOAD(&htim15, BUTTON_DEBOUNCE_MS);	//Set power button debounce period
+  PIDController_Init(&pid);
   HAL_Delay(70);	// For stability
+
+  HAL_ADCEx_Calibration_Start(&hadc1, ADC_SINGLE_ENDED);	//Calibrate ADC for better temperature reading
 
 #if (USINGMAX17048)
   MAX17048_Init();
@@ -388,6 +401,10 @@ int main(void)
 
 	  if(SystemPowerState)
 	  {
+		  /*
+		   * While system is running,the code below will always run
+		   */
+
 		  if(!InitialSystemBoot)	//Start a boot sequence once
 		  {
 			  InitialSystemBoot = true;	//Do it once
@@ -400,17 +417,18 @@ int main(void)
 			  HAL_Delay(100);
 			  Set_RGB(0, 0, 100);
 			  HAL_Delay(200);
+			  HAL_GPIO_WritePin(En_Regulators_GPIO_Port, En_Regulators_Pin, GPIO_PIN_SET);	//Turn on Regulators
 		  }
-		  /*
-		   * While system is running,the code below will always run
-		   */
+
 
 		  if(IsSystemCharging)
 		  {
-			  if(CurrentBatteryPercentage < 70)
+			  max17048_get_soc(&hi2c1, &CurrentBatteryPercentage);	//Get current Battery Percentage
+			  if(CurrentBatteryPercentage < 75)
 			  {
 				  Set_RGB(100, 64, 0);
-			  }else if(CurrentBatteryPercentage >= 70 && CurrentBatteryPercentage < 90)
+			  }
+			  else if(CurrentBatteryPercentage >= 75 && CurrentBatteryPercentage < 90)
 			  {
 				  Set_RGB(0, 100, 0);
 			  }else
@@ -423,8 +441,26 @@ int main(void)
 			  Set_RGB(Remap(CurrentBatteryPercentage, 0, 100, 100, 0), 0, Remap(CurrentBatteryPercentage, 0, 100, 40, 100));
 		  }
 
+		  /*
+		   * TODO:
+		   * READ TEMPERATURE AND ADJUST FAN USING PID
+		   */
+
+		  HAL_ADC_Start(&hadc1);
+		  HAL_ADC_PollForConversion(&hadc1, 10);
+		  NTC_RawValue = HAL_ADC_GetValue(&hadc1);
+
+			/* temp */
+			float Ntc_Ln = log(NTC_RawValue);
+			/* calc. temperature */
+			float Ntc_Tmp = (1.0/(A + B*Ntc_Ln + C*Ntc_Ln*Ntc_Ln*Ntc_Ln)) - 273.15;
+
 	  }else if(!SystemPowerState)
 	  {
+		  /*
+		   * While system is Down,the code below will always run
+		   */
+
 		 if(InitialSystemBoot)	//Start shutdown sequence
 		 {
 			 InitialSystemBoot = false;
@@ -435,8 +471,25 @@ int main(void)
 			  Set_RGB( 0, 100, 0 );
 			  HAL_Delay(200);
 			  Set_RGB(0, 0, 100);
-			  HAL_Delay(500);
+			  HAL_Delay(200);
 			  Set_RGB(0, 0, 0);
+			  HAL_GPIO_WritePin(En_Regulators_GPIO_Port, En_Regulators_Pin, GPIO_PIN_RESET);	//Turn off Regulators
+		 }
+
+		 if(IsSystemCharging)
+		 {
+			max17048_get_soc(&hi2c1, &CurrentBatteryPercentage);	//Get current Battery Percentage
+			if(CurrentBatteryPercentage < 75)
+			{
+				Set_RGB(100, 64, 0);
+			}
+			else if(CurrentBatteryPercentage >= 75 && CurrentBatteryPercentage < 90)
+			{
+				Set_RGB(0, 100, 0);
+			}else
+			{
+				Set_RGB(0, 0, 100);
+			}
 		 }
 
 	  }
@@ -490,6 +543,64 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+}
+
+/**
+  * @brief ADC1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_ADC1_Init(void)
+{
+
+  /* USER CODE BEGIN ADC1_Init 0 */
+
+  /* USER CODE END ADC1_Init 0 */
+
+  ADC_ChannelConfTypeDef sConfig = {0};
+
+  /* USER CODE BEGIN ADC1_Init 1 */
+
+  /* USER CODE END ADC1_Init 1 */
+
+  /** Common config
+  */
+  hadc1.Instance = ADC1;
+  hadc1.Init.ClockPrescaler = ADC_CLOCK_ASYNC_DIV4;
+  hadc1.Init.Resolution = ADC_RESOLUTION_12B;
+  hadc1.Init.DataAlign = ADC_DATAALIGN_RIGHT;
+  hadc1.Init.ScanConvMode = ADC_SCAN_DISABLE;
+  hadc1.Init.EOCSelection = ADC_EOC_SINGLE_CONV;
+  hadc1.Init.LowPowerAutoWait = DISABLE;
+  hadc1.Init.ContinuousConvMode = DISABLE;
+  hadc1.Init.NbrOfConversion = 1;
+  hadc1.Init.DiscontinuousConvMode = DISABLE;
+  hadc1.Init.ExternalTrigConv = ADC_SOFTWARE_START;
+  hadc1.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
+  hadc1.Init.DMAContinuousRequests = DISABLE;
+  hadc1.Init.Overrun = ADC_OVR_DATA_PRESERVED;
+  hadc1.Init.OversamplingMode = DISABLE;
+  if (HAL_ADC_Init(&hadc1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /** Configure Regular Channel
+  */
+  sConfig.Channel = ADC_CHANNEL_9;
+  sConfig.Rank = ADC_REGULAR_RANK_1;
+  sConfig.SamplingTime = ADC_SAMPLETIME_92CYCLES_5;
+  sConfig.SingleDiff = ADC_SINGLE_ENDED;
+  sConfig.OffsetNumber = ADC_OFFSET_NONE;
+  sConfig.Offset = 0;
+  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN ADC1_Init 2 */
+
+  /* USER CODE END ADC1_Init 2 */
+
 }
 
 /**
@@ -666,6 +777,16 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOA_CLK_ENABLE();
   __HAL_RCC_GPIOC_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(En_Regulators_GPIO_Port, En_Regulators_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin : En_Regulators_Pin */
+  GPIO_InitStruct.Pin = En_Regulators_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(En_Regulators_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : Power_Button_Pin */
   GPIO_InitStruct.Pin = Power_Button_Pin;

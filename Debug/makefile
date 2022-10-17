@@ -60,8 +60,8 @@ all: main-build
 main-build: RedemptionPortable.elf secondary-outputs
 
 # Tool invocations
-RedemptionPortable.elf RedemptionPortable.map: $(OBJS) $(USER_OBJS) C:\Users\super\Documents\stm32projects\RedemptionPortable\STM32L431RCTX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "RedemptionPortable.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"C:\Users\super\Documents\stm32projects\RedemptionPortable\STM32L431RCTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="RedemptionPortable.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+RedemptionPortable.elf RedemptionPortable.map: $(OBJS) $(USER_OBJS) C:\Users\Mohammad.almarri\Desktop\RedemptionPortable\STM32L431RCTX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-gcc -o "RedemptionPortable.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"C:\Users\Mohammad.almarri\Desktop\RedemptionPortable\STM32L431RCTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="RedemptionPortable.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 

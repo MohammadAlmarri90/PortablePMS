@@ -70,6 +70,10 @@ void Error_Handler(void);
 #define RGB_G_GPIO_Port GPIOA
 #define RGB_B_Pin GPIO_PIN_2
 #define RGB_B_GPIO_Port GPIOA
+#define NTC_IN_Pin GPIO_PIN_4
+#define NTC_IN_GPIO_Port GPIOA
+#define En_Regulators_Pin GPIO_PIN_6
+#define En_Regulators_GPIO_Port GPIOC
 #define Power_Button_Pin GPIO_PIN_7
 #define Power_Button_GPIO_Port GPIOC
 #define Power_Button_EXTI_IRQn EXTI9_5_IRQn
