@@ -21,7 +21,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "PID.h"
+#include "pid.h"
 #include "BQ24295.h"
 #include "max17048.h"
 #include "math.h"
@@ -48,28 +48,18 @@
 #define BUTTON_LONGPRESS_PERIOD		1000 //(total is (debounce + shortpress + longpress) periods
 #define BUTTON_UNINTENTIONAL_PERIOD	4000 //pressed on random object
 
+
 /*		PID CONTROLS		*/
+double MeasuredTemperature;
+double PIDOut;
+double Temperautre_SetPoint = 40;
+PID_TypeDef Fan_PID;
 
-#if (ENABLEPID)	//PID Constants
-	#define PID_KP  2.0f
-	#define PID_KI  0.5f
-	#define PID_KD  0.25f
-	#define PID_TAU 0.02f
-	#define PID_LIM_MIN  60.0f		//minimum pwm signal to be output
-	#define PID_LIM_MAX  100.0f		//maximum pwm signal to be output
-	#define PID_LIM_MIN_INT -5.0f
-	#define PID_LIM_MAX_INT  5.0f
-	#define SAMPLE_TIME_S 0.01f
-	PIDController pid;
-	float NTC_RawValue;
-
-	#define PID_DesiredTemperature	45.0f //Desired Temperature in °C
-
-	/* constants of Steinhart-Hart equation */
+/* constants of Steinhart-Hart equation(NTC temperature calculating) */
 	#define A 0.0008736528f
 	#define B 0.000253893f
 	#define C 0.0000001816f
-#endif
+
 
 /*		MAX17048 CONTROLS	*/
 #if (USINGMAX17048)
@@ -133,25 +123,6 @@ static void MX_TIM1_Init(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
-#if (ENABLEPID)	//Region ENABLEPID
-
-	void InitializePIDController() {
-		PIDController pid = {
-				PID_KP,
-				PID_KI,
-				PID_KD,
-				PID_TAU,
-				PID_LIM_MIN,
-				PID_LIM_MAX,
-				PID_LIM_MIN_INT,
-				PID_LIM_MAX_INT,
-				SAMPLE_TIME_S
-		};
-
-		PIDController_Init(&pid);
-	}
-
-#endif			//End Region ENABLEPID
 
 
 #if (ENABLESLEEPMODE)
@@ -324,6 +295,9 @@ void Set_RGB(uint8_t Red,uint8_t Green,uint8_t Blue) {
 int main(void)
 {
   /* USER CODE BEGIN 1 */
+#if (1)	//Init
+
+
 
   /* USER CODE END 1 */
 
@@ -351,9 +325,16 @@ int main(void)
   MX_ADC1_Init();
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
+#endif
+
 
   __HAL_TIM_SET_AUTORELOAD(&htim15, BUTTON_DEBOUNCE_MS);	//Set power button debounce period
-  PIDController_Init(&pid);
+
+  PID(&Fan_PID, &MeasuredTemperature, &PIDOut, &Temperautre_SetPoint, 2, 5, 1, _PID_P_ON_E, _PID_CD_DIRECT);
+  PID_SetMode(&Fan_PID, _PID_MODE_AUTOMATIC);
+  PID_SetSampleTime(&Fan_PID, 500);
+  PID_SetOutputLimits(&Fan_PID, 40, 100);
+
   HAL_Delay(70);	// For stability
 
   HAL_ADCEx_Calibration_Start(&hadc1, ADC_SINGLE_ENDED);	//Calibrate ADC for better temperature reading
@@ -377,6 +358,7 @@ int main(void)
 	  }
 
   }
+
   HAL_Delay(70);	// For stability
 
   max17048_get_soc(&hi2c1, &CurrentBatteryPercentage);	//Get current Battery Percentage
@@ -448,22 +430,18 @@ int main(void)
 			  Set_RGB(Remap(CurrentBatteryPercentage, 0, 100, 100, 0), 0, Remap(CurrentBatteryPercentage, 0, 100, 40, 100));
 		  }
 
-
+		  //Get Temperautre
 		  HAL_ADC_Start(&hadc1);
 		  HAL_ADC_PollForConversion(&hadc1, 10);
-		  NTC_RawValue = HAL_ADC_GetValue(&hadc1);
+		  float NTC_RawValue = HAL_ADC_GetValue(&hadc1);
 		  HAL_ADC_Stop(&hadc1);
-		  /* temp */
 		  float Ntc_Ln = log(NTC_RawValue);
-		  /* calc. temperature */
-		  float Ntc_Tmp = (1.0/(A + B*Ntc_Ln + C*Ntc_Ln*Ntc_Ln*Ntc_Ln)) - 273.15;
+		  MeasuredTemperature = (1.0/(A + B*Ntc_Ln + C*Ntc_Ln*Ntc_Ln*Ntc_Ln)) - 273.15;
 
 		  /* The output is in "pid.out" */
-		  PIDController_Update(&pid, PID_DesiredTemperature, Ntc_Tmp);
-		  uint32_t pidControllerOutput = pid.out;
 
 		  /* Set New Duty cycle output*/
-		  TIM1->CCR4 = pidControllerOutput;
+		  TIM1->CCR4 =PIDOut;
 
 
 
