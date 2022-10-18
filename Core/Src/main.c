@@ -55,13 +55,16 @@
 	#define PID_KI  0.5f
 	#define PID_KD  0.25f
 	#define PID_TAU 0.02f
-	#define PID_LIM_MIN -10.0f
-	#define PID_LIM_MAX  10.0f
+	#define PID_LIM_MIN  60.0f		//minimum pwm signal to be output
+	#define PID_LIM_MAX  100.0f		//maximum pwm signal to be output
 	#define PID_LIM_MIN_INT -5.0f
 	#define PID_LIM_MAX_INT  5.0f
 	#define SAMPLE_TIME_S 0.01f
 	PIDController pid;
 	float NTC_RawValue;
+
+	#define PID_DesiredTemperature	45.0f //Desired Temperature in °C
+
 	/* constants of Steinhart-Hart equation */
 	#define A 0.0008736528f
 	#define B 0.000253893f
@@ -411,9 +414,10 @@ int main(void)
 		  if(!InitialSystemBoot)	//Start a boot sequence once
 		  {
 			  InitialSystemBoot = true;	//Do it once
-			  HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);
-			  HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_2);
-			  HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_3);
+			  HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);	//R
+			  HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_2);	//G
+			  HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_3);	//B
+			  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_4);	//Fan PWM
 			  Set_RGB( 100, 0, 0 );
 			  HAL_Delay(100);
 			  Set_RGB(0, 100, 0);
@@ -444,56 +448,62 @@ int main(void)
 			  Set_RGB(Remap(CurrentBatteryPercentage, 0, 100, 100, 0), 0, Remap(CurrentBatteryPercentage, 0, 100, 40, 100));
 		  }
 
-		  /*
-		   * TODO:
-		   * READ TEMPERATURE AND ADJUST FAN USING PID
-		   */
 
 		  HAL_ADC_Start(&hadc1);
 		  HAL_ADC_PollForConversion(&hadc1, 10);
 		  NTC_RawValue = HAL_ADC_GetValue(&hadc1);
+		  HAL_ADC_Stop(&hadc1);
+		  /* temp */
+		  float Ntc_Ln = log(NTC_RawValue);
+		  /* calc. temperature */
+		  float Ntc_Tmp = (1.0/(A + B*Ntc_Ln + C*Ntc_Ln*Ntc_Ln*Ntc_Ln)) - 273.15;
 
-			/* temp */
-			float Ntc_Ln = log(NTC_RawValue);
-			/* calc. temperature */
-			float Ntc_Tmp = (1.0/(A + B*Ntc_Ln + C*Ntc_Ln*Ntc_Ln*Ntc_Ln)) - 273.15;
+		  /* The output is in "pid.out" */
+		  PIDController_Update(&pid, PID_DesiredTemperature, Ntc_Tmp);
+		  uint32_t pidControllerOutput = pid.out;
+
+		  /* Set New Duty cycle output*/
+		  TIM1->CCR4 = pidControllerOutput;
+
+
 
 	  }else if(!SystemPowerState)
 	  {
-		  /*
-		   * While system is Down,the code below will always run
-		   */
+			/*
+			* While system is Down,the code below will always run
+			*/
 
-		 if(InitialSystemBoot)	//Start shutdown sequence
-		 {
-			 InitialSystemBoot = false;
-			  Set_RGB( 0, 100, 0 );
-			  HAL_Delay(200);
-			  Set_RGB(0, 0, 100);
-			  HAL_Delay(200);
-			  Set_RGB( 0, 100, 0 );
-			  HAL_Delay(200);
-			  Set_RGB(0, 0, 100);
-			  HAL_Delay(200);
-			  Set_RGB(0, 0, 0);
-			  HAL_GPIO_WritePin(En_Regulators_GPIO_Port, En_Regulators_Pin, GPIO_PIN_RESET);	//Turn off Regulators
-		 }
-
-		 if(IsSystemCharging)
-		 {
-			max17048_get_soc(&hi2c1, &CurrentBatteryPercentage);	//Get current Battery Percentage
-			if(CurrentBatteryPercentage < 75)
+			if(InitialSystemBoot)	//Start shutdown sequence
 			{
-				Set_RGB(100, 64, 0);
-			}
-			else if(CurrentBatteryPercentage >= 75 && CurrentBatteryPercentage < 90)
-			{
-				Set_RGB(0, 100, 0);
-			}else
-			{
+				InitialSystemBoot = false;
+				Set_RGB( 0, 100, 0 );
+				HAL_Delay(200);
 				Set_RGB(0, 0, 100);
+				HAL_Delay(200);
+				Set_RGB( 0, 100, 0 );
+				HAL_Delay(200);
+				Set_RGB(0, 0, 100);
+				HAL_Delay(200);
+				Set_RGB(0, 0, 0);
+				HAL_GPIO_WritePin(En_Regulators_GPIO_Port, En_Regulators_Pin, GPIO_PIN_RESET);	//Turn off Regulators
+				HAL_TIM_PWM_Stop(&htim1, TIM_CHANNEL_4);	//Fan PWM
 			}
-		 }
+
+			if(IsSystemCharging)
+			{
+				max17048_get_soc(&hi2c1, &CurrentBatteryPercentage);	//Get current Battery Percentage
+				if(CurrentBatteryPercentage < 75)
+				{
+					Set_RGB(100, 64, 0);
+				}
+				else if(CurrentBatteryPercentage >= 75 && CurrentBatteryPercentage < 90)
+				{
+					Set_RGB(0, 100, 0);
+				}else
+				{
+					Set_RGB(0, 0, 100);
+				}
+			}
 
 	  }
 
@@ -592,7 +602,7 @@ static void MX_ADC1_Init(void)
   */
   sConfig.Channel = ADC_CHANNEL_9;
   sConfig.Rank = ADC_REGULAR_RANK_1;
-  sConfig.SamplingTime = ADC_SAMPLETIME_92CYCLES_5;
+  sConfig.SamplingTime = ADC_SAMPLETIME_247CYCLES_5;
   sConfig.SingleDiff = ADC_SINGLE_ENDED;
   sConfig.OffsetNumber = ADC_OFFSET_NONE;
   sConfig.Offset = 0;
@@ -675,9 +685,9 @@ static void MX_TIM1_Init(void)
 
   /* USER CODE END TIM1_Init 1 */
   htim1.Instance = TIM1;
-  htim1.Init.Prescaler = 0;
+  htim1.Init.Prescaler = 4-1;
   htim1.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim1.Init.Period = 65535;
+  htim1.Init.Period = 100;
   htim1.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim1.Init.RepetitionCounter = 0;
   htim1.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
