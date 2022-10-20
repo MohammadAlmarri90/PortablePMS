@@ -19,5 +19,5 @@ bool BQ_Init();
 uint8_t BQ_Read(uint8_t reg);
 void BQ_Write(uint8_t reg, uint8_t data);
 bool BQ_IsPresent();
-uint8_t BQ_IsCharging();
+bool BQ_IsCharging();
 #endif /* INC_BQ24295_H_ */

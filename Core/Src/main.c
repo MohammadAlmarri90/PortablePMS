@@ -98,7 +98,7 @@ bool PowerButtonUnintentionalPress = false;
 
 bool SystemPowerState = false;
 bool InitialSystemBoot = false;
-
+bool RequestSleep = false;
 bool IsSystemCharging = false;
 
 /* USER CODE END PV */
@@ -415,6 +415,7 @@ int main(void)
 		   * TODO:
 		   * something with the BQ INT
 		   */
+		  IsSystemCharging = BQ_IsCharging();
 	  }
 
 #if (USINGMAX17048)
@@ -468,7 +469,7 @@ int main(void)
 			  Set_RGB(Remap(CurrentBatteryPercentage, 0, 100, 100, 0), 0, Remap(CurrentBatteryPercentage, 0, 100, 40, 100));
 		  }
 
-		  //Get Temperautre
+		  //Get Temperature
 		  MeasuredTemperature = readThermistor();
 		  /* Run PID controller with the new measured temperature */
 		  PID_Compute(&Fan_PID);
@@ -477,7 +478,8 @@ int main(void)
 
 
 
-	  }else if(!SystemPowerState)
+	  }
+	  else
 	  {
 			/*
 			* While system is Down,the code below will always run
@@ -513,10 +515,19 @@ int main(void)
 				{
 					Set_RGB(0, 0, 100);
 				}
+			}else
+			{
+				RequestSleep = true;
 			}
 
 	  }
 
+	  if(RequestSleep)
+	  {
+		  EnterSleepModeWakeOnInturrupt();	//Will sleep here
+
+		  RequestSleep = false;				//will wakeup here
+	  }
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */

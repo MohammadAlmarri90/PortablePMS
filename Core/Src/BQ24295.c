@@ -188,11 +188,16 @@ bool BQ_IsPresent()
 }
 
 
-uint8_t BQ_IsCharging()
+bool BQ_IsCharging()
 {
 	uint8_t SystemStatus 	= BQ_Read(SystemStatusReg);
 	uint8_t chargeStatus 	= (SystemStatus >> 4) & 0b11;
-	return chargeStatus;
+	if(chargeStatus == 0b01 || chargeStatus == 0b10)	//Pre-Charging or Fast-Charging
+	{
+		return true;
+	}
+	return false;
+
 }
 
 
