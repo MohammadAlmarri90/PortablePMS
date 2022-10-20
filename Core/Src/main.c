@@ -312,7 +312,7 @@ double readThermistor()
  double tCelsius    = 0;            // Hold temperature in celsius
  double adcAverage  = 0;            // Holds the average voltage measurement
 
- adcAverage = GetADCValue(100);
+ adcAverage = GetADCValue(200);
 
  rThermistor = BALANCE_RESISTOR * ( (MAX_ADC / adcAverage) - 1);
 
@@ -470,8 +470,8 @@ int main(void)
 
 		  //Get Temperautre
 		  MeasuredTemperature = readThermistor();
-		  /* The output is in "pid.out" */
-
+		  /* Run PID controller with the new measured temperature */
+		  PID_Compute(&Fan_PID);
 		  /* Set New Duty cycle output*/
 		  TIM1->CCR4 =PIDOut;
 
