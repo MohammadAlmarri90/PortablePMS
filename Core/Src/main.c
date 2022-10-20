@@ -55,11 +55,6 @@ double PIDOut;
 double Temperautre_SetPoint = 40;
 PID_TypeDef Fan_PID;
 
-/* constants of Steinhart-Hart equation(NTC temperature calculating) */
-	#define A 0.0008736528f
-	#define B 0.000253893f
-	#define C 0.0000001816f
-
 
 /*		MAX17048 CONTROLS	*/
 #if (USINGMAX17048)
@@ -286,6 +281,49 @@ void Set_RGB(uint8_t Red,uint8_t Green,uint8_t Blue) {
 	TIM2->CCR3 = Blue;
 }
 
+
+float GetADCValue(float numberOfSamples)
+{
+	float averageRaw = 0;
+	float i = 0;
+	for (i = 0; i < numberOfSamples; ++i)
+	{
+		HAL_ADC_Start(&hadc1);
+		HAL_ADC_PollForConversion(&hadc1, 10);
+		averageRaw += HAL_ADC_GetValue(&hadc1);
+		HAL_ADC_Stop(&hadc1);
+	}
+
+	return (averageRaw/numberOfSamples);
+
+}
+
+const double BALANCE_RESISTOR   = 9710.0;
+const double MAX_ADC            = 4095.0;
+const double BETA               = 3974.0;
+const double ROOM_TEMP          = 298.15;   // room temperature in Kelvin
+const double RESISTOR_ROOM_TEMP = 10000.0;
+
+double readThermistor()
+{
+
+ double rThermistor = 0;            // Holds thermistor resistance value
+ double tKelvin     = 0;            // Holds calculated temperature
+ double tCelsius    = 0;            // Hold temperature in celsius
+ double adcAverage  = 0;            // Holds the average voltage measurement
+
+ adcAverage = GetADCValue(100);
+
+ rThermistor = BALANCE_RESISTOR * ( (MAX_ADC / adcAverage) - 1);
+
+ tKelvin = (BETA * ROOM_TEMP) /
+           (BETA + (ROOM_TEMP * log(rThermistor / RESISTOR_ROOM_TEMP)));
+
+ tCelsius = tKelvin - 273.15;  // convert kelvin to celsius
+
+ return tCelsius;    // Return the temperature in Celsius
+}
+
 /* USER CODE END 0 */
 
 /**
@@ -431,13 +469,7 @@ int main(void)
 		  }
 
 		  //Get Temperautre
-		  HAL_ADC_Start(&hadc1);
-		  HAL_ADC_PollForConversion(&hadc1, 10);
-		  float NTC_RawValue = HAL_ADC_GetValue(&hadc1);
-		  HAL_ADC_Stop(&hadc1);
-		  float Ntc_Ln = log(NTC_RawValue);
-		  MeasuredTemperature = (1.0/(A + B*Ntc_Ln + C*Ntc_Ln*Ntc_Ln*Ntc_Ln)) - 273.15;
-
+		  MeasuredTemperature = readThermistor();
 		  /* The output is in "pid.out" */
 
 		  /* Set New Duty cycle output*/

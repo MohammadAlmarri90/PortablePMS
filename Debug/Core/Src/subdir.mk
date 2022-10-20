@@ -8,9 +8,9 @@ C_SRCS += \
 ../Core/Src/BQ24295.c \
 ../Core/Src/BQ25895M.c \
 ../Core/Src/LM49450.c \
+../Core/Src/PID.c \
 ../Core/Src/main.c \
 ../Core/Src/max17048.c \
-../Core/Src/pid.c \
 ../Core/Src/stm32l4xx_hal_msp.c \
 ../Core/Src/stm32l4xx_it.c \
 ../Core/Src/syscalls.c \
@@ -21,9 +21,9 @@ OBJS += \
 ./Core/Src/BQ24295.o \
 ./Core/Src/BQ25895M.o \
 ./Core/Src/LM49450.o \
+./Core/Src/PID.o \
 ./Core/Src/main.o \
 ./Core/Src/max17048.o \
-./Core/Src/pid.o \
 ./Core/Src/stm32l4xx_hal_msp.o \
 ./Core/Src/stm32l4xx_it.o \
 ./Core/Src/syscalls.o \
@@ -34,9 +34,9 @@ C_DEPS += \
 ./Core/Src/BQ24295.d \
 ./Core/Src/BQ25895M.d \
 ./Core/Src/LM49450.d \
+./Core/Src/PID.d \
 ./Core/Src/main.d \
 ./Core/Src/max17048.d \
-./Core/Src/pid.d \
 ./Core/Src/stm32l4xx_hal_msp.d \
 ./Core/Src/stm32l4xx_it.d \
 ./Core/Src/syscalls.d \
@@ -51,7 +51,7 @@ Core/Src/%.o Core/Src/%.su: ../Core/Src/%.c Core/Src/subdir.mk
 clean: clean-Core-2f-Src
 
 clean-Core-2f-Src:
-	-$(RM) ./Core/Src/BQ24295.d ./Core/Src/BQ24295.o ./Core/Src/BQ24295.su ./Core/Src/BQ25895M.d ./Core/Src/BQ25895M.o ./Core/Src/BQ25895M.su ./Core/Src/LM49450.d ./Core/Src/LM49450.o ./Core/Src/LM49450.su ./Core/Src/main.d ./Core/Src/main.o ./Core/Src/main.su ./Core/Src/max17048.d ./Core/Src/max17048.o ./Core/Src/max17048.su ./Core/Src/pid.d ./Core/Src/pid.o ./Core/Src/pid.su ./Core/Src/stm32l4xx_hal_msp.d ./Core/Src/stm32l4xx_hal_msp.o ./Core/Src/stm32l4xx_hal_msp.su ./Core/Src/stm32l4xx_it.d ./Core/Src/stm32l4xx_it.o ./Core/Src/stm32l4xx_it.su ./Core/Src/syscalls.d ./Core/Src/syscalls.o ./Core/Src/syscalls.su ./Core/Src/sysmem.d ./Core/Src/sysmem.o ./Core/Src/sysmem.su ./Core/Src/system_stm32l4xx.d ./Core/Src/system_stm32l4xx.o ./Core/Src/system_stm32l4xx.su
+	-$(RM) ./Core/Src/BQ24295.d ./Core/Src/BQ24295.o ./Core/Src/BQ24295.su ./Core/Src/BQ25895M.d ./Core/Src/BQ25895M.o ./Core/Src/BQ25895M.su ./Core/Src/LM49450.d ./Core/Src/LM49450.o ./Core/Src/LM49450.su ./Core/Src/PID.d ./Core/Src/PID.o ./Core/Src/PID.su ./Core/Src/main.d ./Core/Src/main.o ./Core/Src/main.su ./Core/Src/max17048.d ./Core/Src/max17048.o ./Core/Src/max17048.su ./Core/Src/stm32l4xx_hal_msp.d ./Core/Src/stm32l4xx_hal_msp.o ./Core/Src/stm32l4xx_hal_msp.su ./Core/Src/stm32l4xx_it.d ./Core/Src/stm32l4xx_it.o ./Core/Src/stm32l4xx_it.su ./Core/Src/syscalls.d ./Core/Src/syscalls.o ./Core/Src/syscalls.su ./Core/Src/sysmem.d ./Core/Src/sysmem.o ./Core/Src/sysmem.su ./Core/Src/system_stm32l4xx.d ./Core/Src/system_stm32l4xx.o ./Core/Src/system_stm32l4xx.su
 
 .PHONY: clean-Core-2f-Src
 
