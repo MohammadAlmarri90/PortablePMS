@@ -368,10 +368,10 @@ int main(void)
 
   __HAL_TIM_SET_AUTORELOAD(&htim15, BUTTON_DEBOUNCE_MS);	//Set power button debounce period
 
-  PID(&Fan_PID, &MeasuredTemperature, &PIDOut, &Temperautre_SetPoint, 2, 5, 1, _PID_P_ON_E, _PID_CD_DIRECT);
+  PID(&Fan_PID, &MeasuredTemperature, &PIDOut, &Temperautre_SetPoint, 2, 5, 1, _PID_P_ON_E, _PID_CD_REVERSE);
   PID_SetMode(&Fan_PID, _PID_MODE_AUTOMATIC);
   PID_SetSampleTime(&Fan_PID, 500);
-  PID_SetOutputLimits(&Fan_PID, 40, 100);
+  PID_SetOutputLimits(&Fan_PID, 5, 100);
 
   HAL_Delay(70);	// For stability
 
