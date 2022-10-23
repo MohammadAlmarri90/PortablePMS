@@ -34,34 +34,34 @@ $(wildcard ../makefile.init) \
 $(wildcard ../makefile.targets) \
 
 
-BUILD_ARTIFACT_NAME := RedemptionPortable
+BUILD_ARTIFACT_NAME := PortablePMS
 BUILD_ARTIFACT_EXTENSION := elf
 BUILD_ARTIFACT_PREFIX :=
 BUILD_ARTIFACT := $(BUILD_ARTIFACT_PREFIX)$(BUILD_ARTIFACT_NAME)$(if $(BUILD_ARTIFACT_EXTENSION),.$(BUILD_ARTIFACT_EXTENSION),)
 
 # Add inputs and outputs from these tool invocations to the build variables 
 EXECUTABLES += \
-RedemptionPortable.elf \
+PortablePMS.elf \
 
 MAP_FILES += \
-RedemptionPortable.map \
+PortablePMS.map \
 
 SIZE_OUTPUT += \
 default.size.stdout \
 
 OBJDUMP_LIST += \
-RedemptionPortable.list \
+PortablePMS.list \
 
 
 # All Target
 all: main-build
 
 # Main-build Target
-main-build: RedemptionPortable.elf secondary-outputs
+main-build: PortablePMS.elf secondary-outputs
 
 # Tool invocations
-RedemptionPortable.elf RedemptionPortable.map: $(OBJS) $(USER_OBJS) C:\Users\super\Documents\stm32projects\RedemptionPortable\STM32L431RCTX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "RedemptionPortable.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"C:\Users\super\Documents\stm32projects\RedemptionPortable\STM32L431RCTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="RedemptionPortable.map" -Wl,--gc-sections -static -u _printf_float --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -u _printf_float -u _scanf_float -Wl,--start-group -lc -lm -Wl,--end-group
+PortablePMS.elf PortablePMS.map: $(OBJS) $(USER_OBJS) C:\Users\super\Documents\stm32projects\PortablePMS\STM32L431RCTX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-gcc -o "PortablePMS.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"C:\Users\super\Documents\stm32projects\PortablePMS\STM32L431RCTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="PortablePMS.map" -Wl,--gc-sections -static -u _printf_float --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -u _printf_float -u _scanf_float -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 
@@ -70,14 +70,14 @@ default.size.stdout: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEPS)
 	@echo 'Finished building: $@'
 	@echo ' '
 
-RedemptionPortable.list: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-objdump -h -S $(EXECUTABLES) > "RedemptionPortable.list"
+PortablePMS.list: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-objdump -h -S $(EXECUTABLES) > "PortablePMS.list"
 	@echo 'Finished building: $@'
 	@echo ' '
 
 # Other Targets
 clean:
-	-$(RM) RedemptionPortable.elf RedemptionPortable.list RedemptionPortable.map default.size.stdout
+	-$(RM) PortablePMS.elf PortablePMS.list PortablePMS.map default.size.stdout
 	-@echo ' '
 
 secondary-outputs: $(SIZE_OUTPUT) $(OBJDUMP_LIST)

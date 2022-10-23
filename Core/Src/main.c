@@ -37,10 +37,8 @@
 
 /*		MAIN CONTROLS		*/
 
-#define ENABLESLEEPMODE 			true
 #define ENABLEPID					true
 #define USINGLM49450				true
-#define USINGMAX17048				true
 
 /*debouncing Controls*/
 #define BUTTON_DEBOUNCE_MS			100
@@ -56,13 +54,8 @@ double Temperautre_SetPoint = 40;
 PID_TypeDef Fan_PID;
 
 
-/*		MAX17048 CONTROLS	*/
-#if (USINGMAX17048)
-	#define Battery_UnderVoltage	3200
-	#define Battery_OverVoltage		4200
-	#define Battery_ResetVoltage	2500	//Set to 2.5V as advised in datasheet (P.13)
-	#define Battery_LowSOCAlert		30		//will send an alert when SOC(1-32%) decreases to assigned number
-#endif
+
+
 
 /* USER CODE END PD */
 
@@ -83,7 +76,7 @@ TIM_HandleTypeDef htim15;
 /* USER CODE BEGIN PV */
 //TODO:
 //IMPLEMENT ERRORS
-uint8_t GLOBAL_errors = 0;	//Error codes in main.h
+uint8_t GLOBAL_errors = 0;	//Error codes in main.h (UNIMPLEMENTED YET)
 
 
 /*		FLAGS		*/
@@ -119,16 +112,14 @@ static void MX_TIM1_Init(void);
 /* USER CODE BEGIN 0 */
 
 
+void EnterSleepModeWakeOnInturrupt() {
+	HAL_SuspendTick();
+	HAL_PWR_EnterSLEEPMode(PWR_MAINREGULATOR_ON, PWR_SLEEPENTRY_WFI);
+}
+void WakeUpFromSleepMode(){
+	HAL_ResumeTick();
+}
 
-#if (ENABLESLEEPMODE)
-	void EnterSleepModeWakeOnInturrupt() {
-		HAL_SuspendTick();
-		HAL_PWR_EnterSLEEPMode(PWR_MAINREGULATOR_ON, PWR_SLEEPENTRY_WFI);
-	}
-	void WakeUpFromSleepMode(){
-		HAL_ResumeTick();
-	}
-#endif
 
 
 
@@ -248,24 +239,32 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 
 }
 
-#if (USINGMAX17048)
+
+/*
+ * MAX17048
+ */
+
+#define Battery_UnderVoltage	3200
+#define Battery_OverVoltage		4200
+#define Battery_ResetVoltage	2500	//Set to 2.5V as advised in datasheet (P.13)
+#define Battery_LowSOCAlert		30		//will send an alert when SOC(1-32%) decreases to assigned number
 
 uint8_t CurrentBatteryPercentage;
 
-	bool MAX17048_Init()
-	{
-		bool ok = true;
-		if (ok) ok = max17048_is_present(&hi2c1);
-		if (ok) ok = max17048_set_undervolted_voltage(&hi2c1, Battery_UnderVoltage);
-		if (ok) ok = max17048_set_overvolted_voltage(&hi2c1, Battery_OverVoltage);
-		if (ok) ok = max17048_set_reset_voltage(&hi2c1, Battery_ResetVoltage);
-		if (ok) ok = max17048_set_bat_low_soc(&hi2c1, Battery_LowSOCAlert);
-		if (ok) ok = max17048_set_voltage_reset_alert(&hi2c1, false);
-		if (ok) ok = max17048_set_soc_change_alert(&hi2c1, false);
-		if (ok) ok = max17048_clear_alerts(&hi2c1);
-		return ok;
-	}
-#endif
+bool MAX17048_Init()
+{
+	bool ok = true;
+	if (ok) ok = max17048_is_present(&hi2c1);
+	if (ok) ok = max17048_set_undervolted_voltage(&hi2c1, Battery_UnderVoltage);
+	if (ok) ok = max17048_set_overvolted_voltage(&hi2c1, Battery_OverVoltage);
+	if (ok) ok = max17048_set_reset_voltage(&hi2c1, Battery_ResetVoltage);
+	if (ok) ok = max17048_set_bat_low_soc(&hi2c1, Battery_LowSOCAlert);
+	if (ok) ok = max17048_set_voltage_reset_alert(&hi2c1, false);
+	if (ok) ok = max17048_set_soc_change_alert(&hi2c1, false);
+	if (ok) ok = max17048_clear_alerts(&hi2c1);
+	return ok;
+}
+
 
 static int Remap (float value, float from1, float to1, float from2, float to2) {
 	return ((value - from1) / (to1 - from1) * (to2 - from2)) + from2;
@@ -281,6 +280,10 @@ void Set_RGB(uint8_t Red,uint8_t Green,uint8_t Blue) {
 	TIM2->CCR3 = Blue;
 }
 
+
+/*
+ * Temperature calculations
+ */
 
 float GetADCValue(float numberOfSamples)
 {
@@ -323,6 +326,8 @@ double readThermistor()
 
  return tCelsius;    // Return the temperature in Celsius
 }
+
+
 
 /* USER CODE END 0 */
 
